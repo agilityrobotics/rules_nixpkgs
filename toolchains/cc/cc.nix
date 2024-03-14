@@ -4,9 +4,11 @@
 , ccExpr ? null
 , ccPkgs ? import <nixpkgs> { config = { }; overlays = [ ]; }
 , ccLang ? "c++"
+, cxxFlags ? "-std=c++0x"
 }:
 
 let
+  cxxFlagsAll = ["-x ${ccLang}"] ++ (pkgs.lib.splitString "|" cxxFlags);
   pkgs = ccPkgs.buildPackages;
   stdenv = ccPkgs.stdenv;
   # The original `postLinkSignHook` from nixpkgs assumes `codesign_allocate` is
@@ -199,8 +201,7 @@ pkgs.runCommand "bazel-${cc.orignalName or cc.name}-toolchain"
       -fno-omit-frame-pointer
     )
     CXX_FLAGS=(
-      -x ${ccLang}
-      -std=c++0x
+      ${pkgs.lib.strings.concatLines cxxFlagsAll}
     )
     LINK_FLAGS=(
       $(

@@ -311,7 +311,8 @@ def nixpkgs_cc_configure(
         target_constraints = None,
         register = True,
         cc_lang = "c++",
-        cross_cpu = ""):
+        cross_cpu = "",
+        cxx_flags = None):
     """Use a CC toolchain from Nixpkgs. No-op if not a nix-based platform.
 
     By default, Bazel auto-configures a CC toolchain from commands (e.g.
@@ -383,6 +384,7 @@ def nixpkgs_cc_configure(
       register: bool, enabled by default, Whether to register (with `register_toolchains`) the generated toolchain and install it as the default cc_toolchain.
       cc_lang: string, `"c++"` by default. Used to populate `CXX_FLAG` so the compiler is called in C++ mode. Can be set to `"none"` together with appropriate `copts` in the `cc_library` call: see above.
       cross_cpu: string, `""` by default. Used if you want to add a cross compilation C/C++ toolchain. Set this to the CPU architecture for the target CPU. For example x86_64, would be k8.
+      cxx_flags: list of string, `"-std=c++0x"` by default. Custom cxx_flags to pass to the toolchain.
     """
     nixopts = list(nixopts)
     nix_file_deps = list(nix_file_deps)
@@ -436,6 +438,12 @@ def nixpkgs_cc_configure(
             cc_lang,
         ])
 
+    if cxx_flags:
+        nixopts.extend([
+            "--argstr",
+            "cxxFlags",
+            "|".join(cxx_flags)
+        ])
     # Invoke `cc.nix` which generates `CC_TOOLCHAIN_INFO`.
     nixpkgs_package(
         name = "{}_info".format(name),
